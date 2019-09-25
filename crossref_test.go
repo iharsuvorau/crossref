@@ -52,27 +52,76 @@ func TestGetWork(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	id := DOI("10.3390/act7010007")
-	work, err := GetWork(c, id)
-	if err != nil {
-		t.Fatal(err)
+	ids := []string{
+		"10.3390/act7010007",
+		"10.1109/JSEN.2018.2797526",
 	}
 
-	t.Logf("work: %+v", work)
-	t.Fail()
+	for _, v := range ids {
+		id := DOI(v)
+		work, err := GetWork(c, id)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
 }
 
 func Test_decodeWork(t *testing.T) {
-	f, err := os.Open("testdata/work.json")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer f.Close()
-
-	work, err := decodeWork(f)
-	if err != nil {
-		t.Fatal(err)
+	args := []string{
+		"testdata/work1.json",
+		"testdata/work2.json",
 	}
 
-	t.Logf("%+v", work)
+	for _, arg := range args {
+		f, err := os.Open(arg)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer f.Close()
+
+		work, err := decodeWork(f)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(work.Authors) == 0 {
+			t.Fatal("really want authors here")
+		}
+	}
+}
+
+func TestDOIFromURL(t *testing.T) {
+	type args struct {
+		s string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    DOI
+		wantErr bool
+	}{
+		{
+			name:    "A",
+			args:    args{s: "https://doi.org/10.3390/act7010007"},
+			want:    DOI("10.3390/act7010007"),
+			wantErr: false,
+		},
+		{
+			name:    "B",
+			args:    args{s: "https://doi.org/10.3390/act7010007/"},
+			want:    DOI("10.3390/act7010007"),
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := DOIFromURL(tt.args.s)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("DOIFromURL() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("DOIFromURL() = %v, want %v", got, tt.want)
+			}
+		})
+	}
 }

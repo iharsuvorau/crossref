@@ -52,10 +52,23 @@ func (c *Client) WorksPath() *url.URL {
 	return c.worksPath
 }
 
-// CrossRef specific
-
 // DOI is a unique identifier of a publication.
 type DOI string
+
+func (id DOI) String() string {
+	return url.PathEscape(string(id))
+}
+
+// DOIFromURL returns DOI from an URL string.
+func DOIFromURL(s string) (DOI, error) {
+	u, err := url.Parse(s)
+	if err != nil {
+		return DOI(""), err
+	}
+	return DOI(strings.Trim(u.Path, "/")), nil
+}
+
+// CrossRef specific
 
 // Response is a CrossRef REST API response type.
 type Response struct {
@@ -109,10 +122,23 @@ func decodeWork(r io.Reader) (*Work, error) {
 	refcount := int(workInt["reference-count"].(float64))
 
 	authorsInt := workInt["author"].([]interface{})
-	authors := make([]string, len(authorsInt))
-	for i, v := range authorsInt {
-		author := v.(map[string]interface{})
-		authors[i] = author["name"].(string)
+	authors := []string{}
+	var name string
+	for _, v := range authorsInt {
+		author, ok := v.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		name, ok = author["name"].(string)
+		if !ok { // trying another scheme, because the name have several schemes in API
+			lastName, ok := author["family"].(string)
+			if !ok { // give up here, because "family" is specified as required
+				continue
+			}
+			firstName, _ := author["given"].(string)
+			name = fmt.Sprintf("%s %s", firstName, lastName)
+		}
+		authors = append(authors, name)
 	}
 
 	work := Work{
