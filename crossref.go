@@ -94,7 +94,9 @@ type Work struct {
 // GetWork returns a work by DOI.
 func GetWork(c *Client, id DOI) (*Work, error) {
 	path := fmt.Sprintf("%s/%s", c.WorksPath(), id)
-	resp, err := http.Get(path)
+	req := http.NewRequest("GET", path, nil)
+	req.Header.Set("User-Agent", "bitbucket.org/iharsuvorau/crossref (mailto:ihar.suvorau@ut.ee)")
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil || resp.StatusCode >= 300 {
 		return nil, fmt.Errorf("failed to get %s: %v, %v", path, resp.StatusCode, err)
 	}
