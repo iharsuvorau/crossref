@@ -10,6 +10,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strings"
 )
 
@@ -59,13 +60,18 @@ func (id DOI) String() string {
 	return url.PathEscape(string(id))
 }
 
-// DOIFromURL returns DOI from an URL string.
+// DOIFromURL returns DOI from an URL string. Read
+// https://www.doi.org/doi_handbook/2_Numbering.html#2.2 for more on
+// the syntax of DOI.
 func DOIFromURL(s string) (DOI, error) {
-	u, err := url.Parse(s)
-	if err != nil {
-		return DOI(""), err
+	// the regexp still doesn't catch unwanted chars like &<>"'
+	re := regexp.MustCompile(`\b(10[.][0-9]*(?:[.][0-9]+)*\/.*\S+)\b`)
+
+	parts := re.FindStringSubmatch(s)
+	if len(parts) > 0 {
+		return DOI(parts[0]), nil
 	}
-	return DOI(strings.Trim(u.Path, "/")), nil
+	return DOI(""), fmt.Errorf("no DOI found in %s", s)
 }
 
 // CrossRef specific

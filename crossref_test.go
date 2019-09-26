@@ -61,6 +61,7 @@ func TestGetWork(t *testing.T) {
 		id := DOI(v)
 		work, err := GetWork(c, id)
 		if err != nil {
+			t.Logf("%+v", work)
 			t.Fatal(err)
 		}
 	}
@@ -109,6 +110,36 @@ func TestDOIFromURL(t *testing.T) {
 			name:    "B",
 			args:    args{s: "https://doi.org/10.3390/act7010007/"},
 			want:    DOI("10.3390/act7010007"),
+			wantErr: false,
+		},
+		{
+			name:    "C",
+			args:    args{s: "doi.org/10.3390/act7010007/"},
+			want:    DOI("10.3390/act7010007"),
+			wantErr: false,
+		},
+		{
+			name:    "D",
+			args:    args{s: "10.1000/123456"},
+			want:    DOI("10.1000/123456"),
+			wantErr: false,
+		},
+		{
+			name:    "E",
+			args:    args{s: "10.1038/issn.1476-4687"},
+			want:    DOI("10.1038/issn.1476-4687"),
+			wantErr: false,
+		},
+		{
+			name:    "F",
+			args:    args{s: "978-12345-99990"},
+			want:    DOI(""),
+			wantErr: true,
+		},
+		{
+			name:    "G",
+			args:    args{s: "10.978.86123/45678"},
+			want:    DOI("10.978.86123/45678"),
 			wantErr: false,
 		},
 	}
