@@ -93,8 +93,13 @@ type Work struct {
 
 // GetWork returns a work by DOI.
 func GetWork(c *Client, id DOI) (*Work, error) {
+	// TODO: rate limit check from headers
+
 	path := fmt.Sprintf("%s/%s", c.WorksPath(), id)
-	req := http.NewRequest("GET", path, nil)
+	req, err := http.NewRequest("GET", path, nil)
+	if err != nil {
+		return nil, err
+	}
 	req.Header.Set("User-Agent", "bitbucket.org/iharsuvorau/crossref (mailto:ihar.suvorau@ut.ee)")
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil || resp.StatusCode >= 300 {
